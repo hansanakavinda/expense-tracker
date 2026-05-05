@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { expenses } from "@/lib/schema";
 import type { OtherExpenseItem } from "@/lib/schema";
-import { eq, like } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 
 export async function getExpenseByDate(date: string) {
   const result = await db
@@ -46,10 +46,14 @@ export async function upsertExpense(data: {
 }
 
 export async function getExpensesByMonth(month: string) {
-  // month = "YYYY-MM"
+  const start = `${month}-01`;
+  const endDate = new Date(`${month}-01T00:00:00Z`);
+  endDate.setUTCMonth(endDate.getUTCMonth() + 1);
+  const end = endDate.toISOString().slice(0, 10);
+
   const result = await db
     .select()
     .from(expenses)
-    .where(like(expenses.date, `${month}-%`));
+    .where(and(gte(expenses.date, start), lt(expenses.date, end)));
   return result;
 }

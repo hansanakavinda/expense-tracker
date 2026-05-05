@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MonthSelector from "@/components/MonthSelector";
 import CategoryBar from "@/components/CategoryBar";
 import { Toast, useToast } from "@/components/Toast";
@@ -136,7 +136,9 @@ function getCategoryTotals(rows: ExpenseRow[]) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [month, setMonth] = useState(getCurrentMonth);
+  const searchParams = useSearchParams();
+  const monthFromUrl = searchParams.get("month") ?? getCurrentMonth();
+  const [month, setMonth] = useState(monthFromUrl);
   const [expenseRows, setExpenseRows] = useState<ExpenseRow[]>([]);
   const [income, setIncome] = useState<IncomeRow>({
     salary: 0,
@@ -146,6 +148,10 @@ export default function DashboardPage() {
   const [loadingData, setLoadingData] = useState(false);
   const [savingIncome, setSavingIncome] = useState(false);
   const { toast, showToast, hideToast } = useToast();
+
+  useEffect(() => {
+    setMonth(monthFromUrl);
+  }, [monthFromUrl]);
 
   const loadMonthData = useCallback(async (m: string) => {
     setLoadingData(true);
@@ -174,6 +180,11 @@ export default function DashboardPage() {
   useEffect(() => {
     loadMonthData(month);
   }, [month, loadMonthData]);
+
+  const handleMonthChange = (nextMonth: string) => {
+    setMonth(nextMonth);
+    router.replace(`/dashboard?month=${nextMonth}`, { scroll: false });
+  };
 
   const handleUpdateIncome = async () => {
     setSavingIncome(true);
@@ -216,7 +227,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold text-white">Dashboard</h1>
-          <MonthSelector month={month} onChange={setMonth} />
+          <MonthSelector month={month} onChange={handleMonthChange} />
         </div>
 
         {loadingData ? (
