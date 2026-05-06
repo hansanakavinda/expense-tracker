@@ -61,6 +61,26 @@ export default function Navbar() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/analytics"
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              pathname === "/analytics"
+                ? "bg-brand-600 text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            Analytics
+          </Link>
+          <Link
+            href="/settings"
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              pathname === "/settings"
+                ? "bg-brand-600 text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            Settings
+          </Link>
           <button
             onClick={handleSignOut}
             disabled={signing}

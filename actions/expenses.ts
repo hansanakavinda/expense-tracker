@@ -57,3 +57,15 @@ export async function getExpensesByMonth(month: string) {
     .where(and(gte(expenses.date, start), lt(expenses.date, end)));
   return result;
 }
+
+export async function getExpensesByYear(year: string) {
+  const start = `${year}-01-01`;
+  const end = `${Number(year) + 1}-01-01`;
+
+  const result = await db
+    .select()
+    .from(expenses)
+    .where(and(gte(expenses.date, start), lt(expenses.date, end)));
+
+  return result;
+}
