@@ -28,7 +28,7 @@ export default async function RootLayout({
       <body className="min-h-screen bg-slate-950 text-white antialiased">
         <SessionProvider session={session}>
           {session && <Navbar />}
-          <main className="mx-auto max-w-2xl px-4 py-6">{children}</main>
+          <main className="mx-auto max-w-2xl px-4 py-6 pb-24 md:pb-6">{children}</main>
         </SessionProvider>
       </body>
     </html>
