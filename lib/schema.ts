@@ -50,3 +50,20 @@ export const income = pgTable(
     monthUnique: unique("income_month_unique").on(table.month),
   })
 );
+
+export type ExpensePresetItem = {
+  label: string;
+  category: string;
+  amount: number;
+  note: string;
+};
+
+export const expensePresets = pgTable("expense_presets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  label: varchar("label", { length: 100 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  amount: integer("amount").notNull().default(0),
+  note: varchar("note", { length: 255 }).notNull().default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

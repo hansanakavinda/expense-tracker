@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import OtherExpenseRow, {
+  CATEGORIES,
   type OtherExpenseEntry,
 } from "@/components/OtherExpenseRow";
 import { Toast, useToast } from "@/components/Toast";
 import { getExpenseByDate, upsertExpense } from "@/actions/expenses";
+import { getExpensePresets } from "@/actions/presets";
+import type { ExpensePresetItem } from "@/lib/schema";
 
 function getTodayString(): string {
   const now = new Date();
@@ -36,6 +40,16 @@ function formatDateLabel(dateStr: string): string {
   });
 }
 
+// Map category names to emoji icons
+const CATEGORY_ICONS: Record<string, string> = {
+  Transport: "🚌",
+  "Utilities & Bills": "💡",
+  "Groceries & Snacks": "🛒",
+  Health: "🏥",
+  Entertainment: "🎬",
+  Other: "📦",
+};
+
 export default function LogPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,39 +61,56 @@ export default function LogPage() {
   const [lunch, setLunch] = useState(0);
   const [dinner, setDinner] = useState(0);
   const [others, setOthers] = useState<OtherExpenseEntry[]>([]);
+  const [presets, setPresets] = useState<Array<ExpensePresetItem & { id: string }>>([]);
   const [hasSavedData, setHasSavedData] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const { toast, showToast, hideToast } = useToast();
 
-  const loadData = useCallback(async (date: string) => {
-    setLoading(true);
-    setHasSavedData(false);
-    try {
-      const data = await getExpenseByDate(date);
-      if (data) {
-        setBreakfast(data.breakfast);
-        setLunch(data.lunch);
-        setDinner(data.dinner);
-        setOthers((data.otherExpenses as OtherExpenseEntry[]) ?? []);
-        setHasSavedData(true);
-      } else {
-        setBreakfast(0);
-        setLunch(0);
-        setDinner(0);
-        setOthers([]);
+  const loadData = useCallback(
+    async (date: string) => {
+      setLoading(true);
+      setHasSavedData(false);
+      try {
+        const data = await getExpenseByDate(date);
+        if (data) {
+          setBreakfast(data.breakfast);
+          setLunch(data.lunch);
+          setDinner(data.dinner);
+          setOthers((data.otherExpenses as OtherExpenseEntry[]) ?? []);
+          setHasSavedData(true);
+        } else {
+          setBreakfast(0);
+          setLunch(0);
+          setDinner(0);
+          setOthers([]);
+        }
+      } catch {
+        showToast("Failed to load data for this date.", "error");
+      } finally {
+        setLoading(false);
       }
+    },
+    [showToast]
+  );
+
+  const loadPresets = useCallback(async () => {
+    try {
+      const items = await getExpensePresets();
+      setPresets(items as Array<ExpensePresetItem & { id: string }>);
     } catch {
-      showToast("Failed to load data for this date.", "error");
-    } finally {
-      setLoading(false);
+      showToast("Failed to load presets.", "error");
     }
   }, [showToast]);
 
   useEffect(() => {
     loadData(selectedDate);
   }, [selectedDate, loadData]);
+
+  useEffect(() => {
+    loadPresets();
+  }, [loadPresets]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -110,6 +141,18 @@ export default function LogPage() {
       ...prev,
       { category: "Transport", amount: 0, note: "" },
     ]);
+  };
+
+  const addPresetToLog = (preset: ExpensePresetItem & { id: string }) => {
+    setOthers((prev) => [
+      ...prev,
+      {
+        category: preset.category,
+        amount: preset.amount,
+        note: preset.note,
+      },
+    ]);
+    showToast(`"${preset.label}" added to log.`, "success");
   };
 
   const updateOther = (index: number, entry: OtherExpenseEntry) => {
@@ -270,6 +313,64 @@ export default function LogPage() {
                   <span className="font-medium text-slate-300">
                     Rs. {totalMeals.toLocaleString("en-LK")}
                   </span>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Presets */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
+                    Quick Presets
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Tap a preset to instantly add it to today&apos;s log.
+                  </p>
+                </div>
+                <Link
+                  href="/settings"
+                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                >
+                  Manage →
+                </Link>
+              </div>
+
+              {presets.length === 0 ? (
+                <div className="py-4 text-center">
+                  <p className="text-sm text-slate-600">No presets configured.</p>
+                  <Link
+                    href="/settings"
+                    className="mt-1 inline-block text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    Go to Settings to add some →
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => addPresetToLog(preset)}
+                      className="group flex flex-col items-start gap-1 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-3 text-left hover:border-brand-600 hover:bg-brand-950/20 transition-all duration-150"
+                    >
+                      <span className="text-base leading-none">
+                        {CATEGORY_ICONS[preset.category] ?? "📦"}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-200 group-hover:text-brand-300 transition-colors line-clamp-1">
+                        {preset.label}
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        Rs. {preset.amount.toLocaleString("en-LK")}
+                      </span>
+                      {preset.note && (
+                        <span className="text-xs text-slate-600 line-clamp-1">
+                          {preset.note}
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

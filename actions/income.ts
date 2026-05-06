@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { income } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 
 export async function getIncomeByMonth(month: string) {
   const result = await db
@@ -39,4 +39,16 @@ export async function upsertIncome(data: {
         updatedAt: now,
       },
     });
+}
+
+export async function getIncomeByYear(year: string) {
+  const start = `${year}-01`;
+  const end = `${Number(year) + 1}-01`;
+
+  const result = await db
+    .select()
+    .from(income)
+    .where(and(gte(income.month, start), lt(income.month, end)));
+
+  return result;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-const CATEGORIES = [
+export const CATEGORIES = [
   "Transport",
   "Utilities & Bills",
   "Groceries & Snacks",

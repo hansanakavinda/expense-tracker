@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import MonthSelector from "@/components/MonthSelector";
-import CategoryBar from "@/components/CategoryBar";
 import { Toast, useToast } from "@/components/Toast";
 import { getExpensesByMonth } from "@/actions/expenses";
 import { getIncomeByMonth, upsertIncome } from "@/actions/income";
@@ -49,89 +49,6 @@ type IncomeRow = {
   other: number;
 };
 
-// Category colors
-const CATEGORY_COLORS: Record<string, string> = {
-  Breakfast: "bg-amber-500",
-  Lunch: "bg-orange-500",
-  Dinner: "bg-rose-500",
-  Transport: "bg-sky-500",
-  "Utilities & Bills": "bg-violet-500",
-  "Groceries & Snacks": "bg-lime-500",
-  Health: "bg-pink-500",
-  Entertainment: "bg-teal-500",
-  Other: "bg-slate-400",
-};
-
-// ─── weekly breakdown ─────────────────────────────────────────────────────────
-
-function getWeeks(
-  month: string,
-  rows: ExpenseRow[]
-): { label: string; total: number }[] {
-  const [y, m] = month.split("-").map(Number);
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const rowMap = new Map(rows.map((r) => [r.date, r]));
-
-  const weeks: { label: string; total: number }[] = [];
-  let weekStart = 1;
-
-  while (weekStart <= daysInMonth) {
-    const weekEnd = Math.min(weekStart + 6, daysInMonth);
-    const startStr = `${y}-${String(m).padStart(2, "0")}-${String(weekStart).padStart(2, "0")}`;
-    const endStr = `${y}-${String(m).padStart(2, "0")}-${String(weekEnd).padStart(2, "0")}`;
-
-    let total = 0;
-    for (let d = weekStart; d <= weekEnd; d++) {
-      const ds = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const row = rowMap.get(ds);
-      if (row) {
-        total +=
-          row.breakfast +
-          row.lunch +
-          row.dinner +
-          row.otherExpenses.reduce((s, e) => s + e.amount, 0);
-      }
-    }
-
-    const label = `Week ${weeks.length + 1} — ${formatDayLabel(startStr).replace(/\w+,\s/, "")} – ${formatDayLabel(endStr).replace(/\w+,\s/, "")}`;
-    weeks.push({ label, total });
-    weekStart += 7;
-  }
-
-  return weeks;
-}
-
-// ─── compute category totals ─────────────────────────────────────────────────
-
-function getCategoryTotals(rows: ExpenseRow[]) {
-  const totals: Record<string, number> = {
-    Breakfast: 0,
-    Lunch: 0,
-    Dinner: 0,
-    Transport: 0,
-    "Utilities & Bills": 0,
-    "Groceries & Snacks": 0,
-    Health: 0,
-    Entertainment: 0,
-    Other: 0,
-  };
-
-  for (const row of rows) {
-    totals["Breakfast"] += row.breakfast;
-    totals["Lunch"] += row.lunch;
-    totals["Dinner"] += row.dinner;
-    for (const item of row.otherExpenses) {
-      if (item.category in totals) {
-        totals[item.category] += item.amount;
-      } else {
-        totals["Other"] += item.amount;
-      }
-    }
-  }
-
-  return totals;
-}
-
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -139,12 +56,9 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const monthFromUrl = searchParams.get("month") ?? getCurrentMonth();
   const [month, setMonth] = useState(monthFromUrl);
+
   const [expenseRows, setExpenseRows] = useState<ExpenseRow[]>([]);
-  const [income, setIncome] = useState<IncomeRow>({
-    salary: 0,
-    freelance: 0,
-    other: 0,
-  });
+  const [income, setIncome] = useState<IncomeRow>({ salary: 0, freelance: 0, other: 0 });
   const [loadingData, setLoadingData] = useState(false);
   const [savingIncome, setSavingIncome] = useState(false);
   const { toast, showToast, hideToast } = useToast();
@@ -153,33 +67,32 @@ export default function DashboardPage() {
     setMonth(monthFromUrl);
   }, [monthFromUrl]);
 
-  const loadMonthData = useCallback(async (m: string) => {
-    setLoadingData(true);
-    try {
-      const [expRows, incRow] = await Promise.all([
-        getExpensesByMonth(m),
-        getIncomeByMonth(m),
-      ]);
-      setExpenseRows(expRows as ExpenseRow[]);
-      setIncome(
-        incRow
-          ? {
-              salary: incRow.salary,
-              freelance: incRow.freelance,
-              other: incRow.other,
-            }
-          : { salary: 0, freelance: 0, other: 0 }
-      );
-    } catch {
-      showToast("Failed to load month data.", "error");
-    } finally {
-      setLoadingData(false);
-    }
-  }, [showToast]);
+  const loadDashboardData = useCallback(
+    async (m: string) => {
+      setLoadingData(true);
+      try {
+        const [expRows, incRow] = await Promise.all([
+          getExpensesByMonth(m),
+          getIncomeByMonth(m),
+        ]);
+        setExpenseRows(expRows as ExpenseRow[]);
+        setIncome(
+          incRow
+            ? { salary: incRow.salary, freelance: incRow.freelance, other: incRow.other }
+            : { salary: 0, freelance: 0, other: 0 }
+        );
+      } catch {
+        showToast("Failed to load month data.", "error");
+      } finally {
+        setLoadingData(false);
+      }
+    },
+    [showToast]
+  );
 
   useEffect(() => {
-    loadMonthData(month);
-  }, [month, loadMonthData]);
+    loadDashboardData(month);
+  }, [month, loadDashboardData]);
 
   const handleMonthChange = (nextMonth: string) => {
     setMonth(nextMonth);
@@ -200,12 +113,17 @@ export default function DashboardPage() {
 
   // ── calculations
   const totalIncome = income.salary + income.freelance + income.other;
-  const categoryTotals = getCategoryTotals(expenseRows);
-  const totalSpent = Object.values(categoryTotals).reduce((s, v) => s + v, 0);
+  const totalSpent = expenseRows.reduce(
+    (s, row) =>
+      s +
+      row.breakfast +
+      row.lunch +
+      row.dinner +
+      row.otherExpenses.reduce((a, e) => a + e.amount, 0),
+    0
+  );
   const balance = totalIncome - totalSpent;
-  const weeks = getWeeks(month, expenseRows);
 
-  // Daily rows with totals (only days with data)
   const dailyRows = expenseRows
     .map((row) => {
       const total =
@@ -232,24 +150,9 @@ export default function DashboardPage() {
 
         {loadingData ? (
           <div className="flex items-center justify-center py-16">
-            <svg
-              className="h-8 w-8 animate-spin text-brand-500"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
+            <svg className="h-8 w-8 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           </div>
         ) : (
@@ -261,20 +164,13 @@ export default function DashboardPage() {
               </h2>
 
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  {
-                    label: "Salary",
-                    key: "salary" as keyof IncomeRow,
-                  },
-                  {
-                    label: "Freelance",
-                    key: "freelance" as keyof IncomeRow,
-                  },
-                  {
-                    label: "Other",
-                    key: "other" as keyof IncomeRow,
-                  },
-                ].map(({ label, key }) => (
+                {(
+                  [
+                    { label: "Salary", key: "salary" as keyof IncomeRow },
+                    { label: "Freelance", key: "freelance" as keyof IncomeRow },
+                    { label: "Other", key: "other" as keyof IncomeRow },
+                  ] as const
+                ).map(({ label, key }) => (
                   <div key={key} className="space-y-1.5">
                     <label className="block text-xs font-medium text-slate-400">
                       {label}
@@ -320,20 +216,12 @@ export default function DashboardPage() {
             {/* ── Summary cards */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-1">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">
-                  Total Income
-                </p>
-                <p className="text-lg font-bold text-emerald-400">
-                  {formatCurrency(totalIncome)}
-                </p>
+                <p className="text-xs text-slate-500 uppercase tracking-wide">Total Income</p>
+                <p className="text-lg font-bold text-emerald-400">{formatCurrency(totalIncome)}</p>
               </div>
               <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-1">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">
-                  Total Spent
-                </p>
-                <p className="text-lg font-bold text-rose-400">
-                  {formatCurrency(totalSpent)}
-                </p>
+                <p className="text-xs text-slate-500 uppercase tracking-wide">Total Spent</p>
+                <p className="text-lg font-bold text-rose-400">{formatCurrency(totalSpent)}</p>
               </div>
               <div
                 className={`col-span-2 sm:col-span-1 rounded-2xl border p-4 space-y-1 ${
@@ -342,9 +230,7 @@ export default function DashboardPage() {
                     : "border-red-800/50 bg-red-950/20"
                 }`}
               >
-                <p className="text-xs text-slate-500 uppercase tracking-wide">
-                  Balance
-                </p>
+                <p className="text-xs text-slate-500 uppercase tracking-wide">Balance</p>
                 <p
                   className={`text-lg font-bold ${
                     balance >= 0 ? "text-emerald-400" : "text-red-400"
@@ -356,58 +242,31 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ── Category breakdown */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 space-y-4">
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-                Category Breakdown
-              </h2>
-
-              {totalSpent === 0 ? (
-                <p className="text-sm text-slate-600 text-center py-4">
-                  No expenses this month
+            {/* ── Analytics link */}
+            <Link
+              href={`/analytics?month=${month}`}
+              className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-5 py-4 hover:border-brand-700 hover:bg-brand-950/10 transition-colors group"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-300 group-hover:text-brand-300 transition-colors">
+                  View Analytics
                 </p>
-              ) : (
-                <div className="space-y-3">
-                  {Object.entries(categoryTotals)
-                    .filter(([, amount]) => amount > 0)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([cat, amount]) => (
-                      <CategoryBar
-                        key={cat}
-                        label={cat}
-                        amount={amount}
-                        total={totalSpent}
-                        color={CATEGORY_COLORS[cat] ?? "bg-slate-400"}
-                      />
-                    ))}
-                </div>
-              )}
-            </div>
-
-            {/* ── Weekly breakdown */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-                Weekly Breakdown
-              </h2>
-
-              <div className="space-y-2">
-                {weeks.map((w, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-800/40 px-4 py-3"
-                  >
-                    <span className="text-sm text-slate-400">{w.label}</span>
-                    <span
-                      className={`text-sm font-semibold ${
-                        w.total > 0 ? "text-white" : "text-slate-600"
-                      }`}
-                    >
-                      {w.total > 0 ? formatCurrency(w.total) : "—"}
-                    </span>
-                  </div>
-                ))}
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Spending trends, category breakdown &amp; weekly patterns
+                </p>
               </div>
-            </div>
+              <svg
+                className="h-5 w-5 text-slate-500 group-hover:text-brand-400 transition-colors shrink-0"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </Link>
 
             {/* ── Daily log preview */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 space-y-3">
@@ -429,9 +288,7 @@ export default function DashboardPage() {
                     return (
                       <button
                         key={row.date}
-                        onClick={() =>
-                          router.push(`/log?date=${row.date}`)
-                        }
+                        onClick={() => router.push(`/log?date=${row.date}`)}
                         className="w-full rounded-xl border border-slate-800 bg-slate-800/40 px-4 py-3 text-left hover:border-brand-700 hover:bg-brand-950/20 transition-colors group"
                       >
                         <div className="flex items-center justify-between">
@@ -443,9 +300,7 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         {notes && (
-                          <p className="mt-0.5 text-xs text-slate-500 truncate">
-                            {notes}
-                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500 truncate">{notes}</p>
                         )}
                       </button>
                     );
