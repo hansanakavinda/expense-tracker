@@ -176,68 +176,70 @@ export default function LogPage() {
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
-      <div className="space-y-6 pb-12">
+      <div className="space-y-5 pb-6">
         {/* Header */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold text-white">Daily Log</h1>
-          <p className="text-sm text-slate-400">
-            {formatDateLabel(selectedDate)}
-          </p>
-        </div>
-
-        {/* Date selector card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <label
-                htmlFor="date-input"
-                className="mb-1 block text-xs font-medium text-slate-400 uppercase tracking-wide"
-              >
-                Date
-              </label>
-              <input
-                id="date-input"
-                type="date"
-                value={selectedDate}
-                max={today}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors"
-              />
-            </div>
-
-            {/* Saved badge */}
-            {hasSavedData && !loading && (
-              <div className="mt-5 flex items-center gap-1.5 rounded-full bg-emerald-900/40 px-3 py-1 border border-emerald-700/50">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">
+        <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-white tracking-tight sm:text-2xl">Daily Log</h1>
+              {hasSavedData && !loading && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-800/60">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Saved
                 </span>
-              </div>
-            )}
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium">
+              {formatDateLabel(selectedDate)}
+            </p>
           </div>
 
-          {/* Prev / Next day */}
-          <div className="flex items-center gap-2">
+          {/* Date Selector and Prev/Next switchers */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-850 px-1.5 py-1 rounded-xl shadow-sm">
+            {/* Prev button */}
             <button
               onClick={() => handleDateChange(addDays(selectedDate, -1))}
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 hover:border-brand-600 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-850 hover:text-white transition-colors"
+              aria-label="Previous day"
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
                   d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                   clipRule="evenodd"
                 />
               </svg>
-              Previous day
             </button>
+
+            {/* Date input wrapper */}
+            <div className="relative flex items-center">
+              <input
+                id="date-input"
+                type="date"
+                value={selectedDate}
+                max={today}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700/80 px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition-colors pointer-events-none select-none"
+              >
+                <svg className="h-3.5 w-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{selectedDate === today ? "Today" : selectedDate}</span>
+              </button>
+            </div>
+
+            {/* Next button */}
             <button
-              onClick={() => handleDateChange(addDays(selectedDate, +1))}
+              onClick={() => handleDateChange(addDays(selectedDate, 1))}
               disabled={isToday}
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 hover:border-brand-600 hover:text-brand-400 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-850 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+              aria-label="Next day"
             >
-              Next day
-              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
@@ -274,101 +276,79 @@ export default function LogPage() {
         ) : (
           <>
             {/* Meals section */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-4">
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-                Meals
-              </h2>
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 space-y-3 backdrop-blur-md">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Meals
+                </h2>
+                {totalMeals > 0 && (
+                  <span className="text-xs font-bold text-slate-300">
+                    Subtotal: Rs. {totalMeals.toLocaleString("en-LK")}
+                  </span>
+                )}
+              </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 {[
                   { label: "Breakfast", value: breakfast, set: setBreakfast },
                   { label: "Lunch", value: lunch, set: setLunch },
                   { label: "Dinner", value: dinner, set: setDinner },
                 ].map(({ label, value, set }) => (
-                  <div key={label} className="space-y-1.5">
-                    <label className="block text-xs font-medium text-slate-400">
+                  <div key={label} className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-colors">
+                    <span className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                       {label}
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-500">
-                        Rs.
-                      </span>
+                    </span>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-xs font-medium text-slate-600">Rs.</span>
                       <input
                         type="number"
                         min={0}
                         value={value || ""}
                         placeholder="0"
                         onChange={(e) => set(parseInt(e.target.value) || 0)}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800 pl-7 pr-2 py-3 text-sm text-white placeholder-slate-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors no-spinner"
+                        className="w-full bg-transparent text-sm font-semibold text-white placeholder-slate-750 focus:outline-none no-spinner"
                       />
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Meal subtotal */}
-              {totalMeals > 0 && (
-                <div className="flex justify-between border-t border-slate-800 pt-2 text-sm">
-                  <span className="text-slate-500">Meal total</span>
-                  <span className="font-medium text-slate-300">
-                    Rs. {totalMeals.toLocaleString("en-LK")}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Quick Presets */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 space-y-3 backdrop-blur-md">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Quick Presets
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Tap a preset to instantly add it to today&apos;s log.
-                  </p>
+                  <span className="text-[10px] text-slate-500">Tap to add</span>
                 </div>
                 <Link
                   href="/settings"
-                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                  className="text-xs text-brand-400 hover:text-brand-300 font-semibold transition-colors"
                 >
                   Manage →
                 </Link>
               </div>
 
               {presets.length === 0 ? (
-                <div className="py-4 text-center">
-                  <p className="text-sm text-slate-600">No presets configured.</p>
-                  <Link
-                    href="/settings"
-                    className="mt-1 inline-block text-xs text-brand-400 hover:text-brand-300 transition-colors"
-                  >
-                    Go to Settings to add some →
-                  </Link>
+                <div className="py-2 text-center">
+                  <p className="text-xs text-slate-600">No presets configured.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-1 px-1 md:flex-wrap">
                   {presets.map((preset) => (
                     <button
                       key={preset.id}
                       type="button"
                       onClick={() => addPresetToLog(preset)}
-                      className="group flex flex-col items-start gap-1 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-3 text-left hover:border-brand-600 hover:bg-brand-950/20 transition-all duration-150"
+                      className="flex items-center gap-1.5 shrink-0 rounded-xl border border-slate-800 bg-slate-950/40 hover:border-brand-500 hover:bg-brand-950/10 px-3 py-1.5 text-xs text-slate-300 hover:text-white transition-all duration-150 active:scale-95"
                     >
-                      <span className="text-base leading-none">
+                      <span className="text-sm">
                         {CATEGORY_ICONS[preset.category] ?? "📦"}
                       </span>
-                      <span className="text-xs font-semibold text-slate-200 group-hover:text-brand-300 transition-colors line-clamp-1">
-                        {preset.label}
-                      </span>
-                      <span className="text-xs text-slate-500 font-medium">
-                        Rs. {preset.amount.toLocaleString("en-LK")}
-                      </span>
-                      {preset.note && (
-                        <span className="text-xs text-slate-600 line-clamp-1">
-                          {preset.note}
-                        </span>
-                      )}
+                      <span className="font-semibold text-slate-200">{preset.label}</span>
+                      <span className="text-slate-500 font-medium">Rs. {preset.amount.toLocaleString("en-LK")}</span>
                     </button>
                   ))}
                 </div>
@@ -376,40 +356,41 @@ export default function LogPage() {
             </div>
 
             {/* Other Expenses */}
-            <div className="space-y-3">
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 space-y-3.5 backdrop-blur-md">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Other Expenses
                 </h2>
                 {others.length > 0 && (
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs font-bold text-slate-500">
                     {others.length} item{others.length !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
 
-              {others.length === 0 && (
-                <p className="py-3 text-center text-sm text-slate-600">
-                  No other expenses yet
-                </p>
+              {others.length === 0 ? (
+                <div className="py-2 text-center">
+                  <p className="text-xs text-slate-500">No other expenses logged for this day.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-800/40 space-y-3">
+                  {others.map((entry, index) => (
+                    <div key={index} className={index > 0 ? "pt-3" : ""}>
+                      <OtherExpenseRow
+                        entry={entry}
+                        index={index}
+                        onChange={updateOther}
+                        onRemove={removeOther}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
-
-              <div className="space-y-2">
-                {others.map((entry, index) => (
-                  <OtherExpenseRow
-                    key={index}
-                    entry={entry}
-                    index={index}
-                    onChange={updateOther}
-                    onRemove={removeOther}
-                  />
-                ))}
-              </div>
 
               <button
                 type="button"
                 onClick={addOther}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700 bg-slate-900/50 px-4 py-3 text-sm font-medium text-slate-400 hover:border-brand-600 hover:bg-brand-950/20 hover:text-brand-400 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-800 bg-slate-950/20 hover:border-brand-500/50 hover:bg-brand-950/10 px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-brand-400 transition-all duration-150 active:scale-[0.99]"
               >
                 <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path
@@ -423,12 +404,12 @@ export default function LogPage() {
             </div>
 
             {/* Day total + Save */}
-            <div className="rounded-2xl border border-brand-800/50 bg-brand-950/20 p-4 space-y-4">
+            <div className="rounded-2xl border border-brand-800/30 bg-brand-950/15 p-4.5 space-y-4 backdrop-blur-md">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-300">
+                <span className="text-sm font-medium text-slate-400">
                   Total for the day
                 </span>
-                <span className="text-lg font-bold text-brand-300">
+                <span className="text-xl font-bold text-brand-400">
                   Rs. {totalDay.toLocaleString("en-LK")}
                 </span>
               </div>
@@ -436,7 +417,7 @@ export default function LogPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full rounded-xl bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full rounded-xl bg-brand-600 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-brand-600/15 hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.99]"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
@@ -462,7 +443,7 @@ export default function LogPage() {
                     Saving…
                   </span>
                 ) : (
-                  "Save"
+                  "Save Log"
                 )}
               </button>
             </div>

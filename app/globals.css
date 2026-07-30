@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,11 +33,20 @@
   animation: slide-up 0.25s ease-out forwards;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling & utility */
 @layer utilities {
   .no-spinner {
     -moz-appearance: textfield;
     appearance: textfield;
+  }
+
+  /* Hide scrollbars but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   ::-webkit-scrollbar {
