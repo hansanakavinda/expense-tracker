@@ -16,15 +16,16 @@ function addMonths(month: string, delta: number): string {
 function formatLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
   const date = new Date(y, m - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  // Using short month format for better mobile fitting (e.g. "Aug 2026")
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
 export default function MonthSelector({ month, onChange }: MonthSelectorProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-1 rounded-xl border border-slate-800/80 bg-slate-900/60 p-1 backdrop-blur-sm shadow-md transition-all duration-200">
       <button
         onClick={() => onChange(addMonths(month, -1))}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:border-brand-500 hover:text-brand-400 transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-200 active:scale-90"
         aria-label="Previous month"
       >
         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -36,13 +37,13 @@ export default function MonthSelector({ month, onChange }: MonthSelectorProps) {
         </svg>
       </button>
 
-      <span className="min-w-[10rem] text-center font-semibold text-white text-base">
+      <span className="min-w-[7rem] sm:min-w-[8.5rem] text-center text-xs sm:text-sm font-bold text-slate-200 select-none">
         {formatLabel(month)}
       </span>
 
       <button
         onClick={() => onChange(addMonths(month, 1))}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:border-brand-500 hover:text-brand-400 transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-200 active:scale-90"
         aria-label="Next month"
       >
         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -56,3 +57,4 @@ export default function MonthSelector({ month, onChange }: MonthSelectorProps) {
     </div>
   );
 }
+
